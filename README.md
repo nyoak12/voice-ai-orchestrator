@@ -1,77 +1,72 @@
-DRAFT: The goal of this project is to take what I learned from the previous ai voice bot project and redo my approach from the ground up as a result of my findings.
+The goal of this project is to take what I learned from the previous AI voice bot project and redo my approach from the ground up as a result of my findings.
 
-my previous voice bot architecture:
-    
-    user input -> SST -> ai model -> TTS -> output 
+## Previous Architecture
+```mermaid
+flowchart LR
+    A([User Input]) --> B[STT]
+    B --> C[AI Model]
+    C --> D[TTS]
+    D --> E([Output])
+```
 
-    positives:
-        -used open source model 
-        -free to run locally on computer
-    limitations:
-        -lacked reasoning ability 
-        -poor sales agent performance
-        -unable to support business operations
+**Positives:**
+- Low cost — free to run local open source model
 
-hypothesis:
-    new architecture will be more effective by creating a deterministic work flow that seperates tasks and reduces scope for light weight ai models.
+**Limitations:**
+- Lacked reasoning ability
+- Poor sales agent performance
+- Unable to support business operations
 
+## Hypothesis
 
-    user input 
-    -> SST 
-    -> controller
-        |
-        state -> source of truth (memory)
-        |
-        extraction -> low temperature model
-        |
-        state update
-        |
-        decision logic (code + rules) -> returns ACTION
-        |
-        strategy (behavior)
-        |
-        retrieval -> knowledge base / search system + ai model(optional summarizer)
-        |
-        response generation -> high temperature model
-    -> TTS
-    -> output
+New architecture will be more effective by creating a deterministic workflow that separates tasks and reduces scope for lightweight AI models.
+```mermaid
+flowchart LR
+    A([User Input]) --> B[STT]
+    B --> C["Extraction\n(low temp)"]
+    C --> D[(State)]
+    C --> E{Controller\ncode + rules}
+    D --> E
+    E --> F[Strategy\nbehavior]
+    F --> G[Retrieval\nknowledge base]
+    G --> I["Response Gen\n(high temp)"]
+    I --> D
+    I --> L[TTS]
+    L --> M([Output])
+```
 
+## Technologies
 
-clarification: ACTION returns (possible enum):
-    - EXTRACT
-    - ASK_FOR_INFO
-    - ANSWER_QUESTION
-    - RETRIEVE_KNOWLEDGE
-    - GENERATE_RESPONSE
-    - COMPLETE
+## Technologies
 
+| Tool | Role | Language |
+|------|------|----------|
+| C++ | Pipeline orchestration | C++ |
+| llama.cpp | Local model inference | C++ |
+| Whisper | STT | Python |
+| Kokoro | TTS | Python |
+| PortAudio | Microphone / speaker | C++ |
+| Makefile | Build system | — |
 
-Technologies:
+## Design Patterns
 
-    c++ to keep latency low and controlled
+| Pattern | Role |
+|---------|------|
+| Factory | Single model instantiation point |
+| Builder | Runtime prompt assembly per task |
+| Controller | Orchestration and action selection |
+| Strategy | Module routing based on selected action |
+| State | Conversation memory outside model context |
 
-    whisper (STT)
-    port audio (microphone/speaker)
-    ollama (open source models run locally)
+## Current Status
 
-    makefile -> c++ build system
-
-Design Patterns:
-        -> builder
-        -> controller
-        -> strategy
-        -> state
-        -> factory
-
-
-current status:
 - [x] Architecture design
 - [ ] Project structure (in progress)
 - [ ] Controller implementation (in progress)
 - [ ] State management
 - [ ] Model integration
 
-next steps:
-    1. make project file structure to reflect architecture in draft
+## Next Steps
 
-    2. Implement controller with string outputs to simulate the flow of tasks and design pattern organization.
+1. Define project file structure to reflect architecture
+2. Implement controller with simulated string outputs to validate design pattern organization
