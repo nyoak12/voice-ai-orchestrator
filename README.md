@@ -23,19 +23,61 @@ New architecture will be more effective by creating a deterministic workflow tha
 ```mermaid
 flowchart LR
     A([User Input]) --> B[STT]
-    B --> C["Extraction\n(low temp)"]
+    B --> C["Extraction agent\n(low temp)"]
     C --> D[(State)]
     C --> E{Controller\ncode + rules}
     D --> E
     E --> F[Strategy\nbehavior]
-    F --> G[Retrieval\nknowledge base]
-    G --> I["Response Gen\n(high temp)"]
+    F --> G["Retrieval agent\n(knowledge base)"]
+    G --> I["Response agent\n(high temp)"]
     I --> D
     I --> L[TTS]
     L --> M([Output])
 ```
 
-## Technologies
+## Operations
+
+Each pipeline stage has a distinct responsibility. The model is instantiated once by the Factory and configured at runtime by the prompt builder based on the current action and state.
+
+### 1. STT
+Raw audio captured by PortAudio is transcribed into text by Whisper.
+
+### 2. Extraction agent
+The prompt builder loads `/skills/extraction.md` and assembles a low temperature prompt. The model extracts structured JSON from the transcript — intent, entities, and any relevant facts.
+
+### 3. State
+Extracted JSON is written to state. The controller reads state on every turn to maintain conversation context without relying on model memory.
+
+### 4. Controller
+Applies deterministic code and rules against the current state. Returns one of the following ACTION enums:
+- `RETRIEVE_KNOWLEDGE` — external data is needed to respond
+- `GENERATE_RESPONSE` — enough context exists to respond directly
+- `COMPLETE` — conversation turn is finished
+
+### 5. Strategy
+Receives the ACTION from the controller and routes the pipeline accordingly — through the retrieval agent or direct to the response agent.
+
+### 6. Retrieval agent
+Queries the knowledge base using context from the extracted JSON and current state. Returns relevant data to be injected into the response prompt.
+
+### 7. Response agent
+The prompt builder loads `/skills/response.md`, injects retrieved context and current state, and assembles a high temperature prompt. The model generates a natural, TTS-friendly response.
+
+### 8. TTS
+The response text is converted to speech by Kokoro and played back via PortAudio.
+
+
+---
+
+## Skill Files
+
+Each model in the pipeline is configured at runtime via a markdown skill file.
+
+| File | Role |
+|------|------|
+| `/skills/extraction.md` | JSON schema and field rules for extraction model |
+| `/skills/response.md` | Persona, tone, and conversation rules for response model |
+
 
 ## Technologies
 
